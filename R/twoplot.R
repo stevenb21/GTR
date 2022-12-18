@@ -1,0 +1,56 @@
+#' Bivariate plots for each feature in the dataframe.
+#'
+#' @param df tabular dataframe
+#' @param depvar column name in dataframe of interest
+#' @param catvec boolean vector of length ncol(df). 1s for categorical features.
+#'
+#' @return Patchwork ggplot of each feature plotted against the dependent variable.
+#' @export
+#'
+#' @import dplyr ggplot2 patchwork reshape2
+#'
+#' @examples
+#' \dontrun{twoplot(iris,"Species",c(0,0,0,0,1))}
+#'
+twoplot <- function(df,depvar,catvec){
+  dv_idx <- which(colnames(df) == depvar)
+  dvcat <- catvec[dv_idx]    # 0 for cont, 1 for cat (depvar)
+  p <- ggplot() + theme_void()
+  dv <- enquo(depvar)
+
+  if (dvcat){
+    cats <- cathelp(df,which(catvec==1))
+    conts <- cathelp(df,append(which(catvec==0),dv_idx))
+    for (i in 1:ncol(cats)){
+      colname_cat <- colnames(cats)[i]
+      if (colname_cat == depvar){next}
+      c <- enquo(colname_cat)
+      p <- p + catcatp(cats, !! c, !! dv)
+    }
+    for (i in 1:ncol(conts)){
+      colname_cont <- colnames(conts)[i]
+      if (colname_cont == depvar){next}
+      c <- enquo(colname_cont)
+      p <- p + catcontp(conts, !! dv, !! c)
+    }
+  }else{
+    cats <- cathelp(df,append(which(catvec==1),dv_idx))
+    conts <- cathelp(df,which(catvec==0))
+    for (i in 1:ncol(cats)){
+      colname_cat <- colnames(cats)[i]
+      if (colname_cat == depvar){next}
+      c <- enquo(colname_cat)
+      p <- p + catcontp(cats, !! c, !! dv)
+    }
+    for (i in 1:ncol(conts)){
+      colname_cont <- colnames(conts)[i]
+      if (colname_cont == depvar){next}
+      c <- enquo(colname_cont)
+      p <- p + contcontp(conts, !! c, !! dv)
+    }
+  }
+  mydepvar <- sym(depvar)
+  if(dvcat){suppressWarnings(conts <- conts %>% select(-!! mydepvar))}
+  p <- p + ggheat(process_cormat(conts)) + plot_layout(ncol=2,widths=20,heights=20)
+  return(p)
+}
