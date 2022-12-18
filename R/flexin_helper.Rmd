@@ -1,0 +1,15 @@
+---
+title: "flexin"
+author: "Steven Brooks"
+date: "2022-12-17"
+output: html_document
+---
+
+```{r ,include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,fig.width=10,fig.height=15)
+```
+
+```{r}
+flexin(df,cv)
+```
+

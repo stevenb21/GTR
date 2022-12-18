@@ -1,0 +1,217 @@
+#' Start shiny gadget session
+#'
+#' @return Shiny Gadget
+#' @export
+#'
+#' @import shiny knitr flextable moments patchwork dplyr ggplot2 reshape2 randomForest entropy nnet
+#'
+#' @examples
+#' \dontrun{gtr_shiny()}
+#'
+gtr_shiny <- function(){
+
+  ui <- fluidPage(
+
+    # App title ----
+    titlePanel("GTR shiny"),
+
+    # Sidebar layout with input and output definitions ----
+    sidebarLayout(
+
+      # Sidebar panel for inputs ----
+      sidebarPanel(
+
+        # Input: Select a file ----
+        fileInput("file1", "Choose CSV File",
+                  multiple = TRUE,
+                  accept = c("text/csv",
+                             "text/comma-separated-values,text/plain",
+                             ".csv")),
+
+        # Horizontal line ----
+        tags$hr(),
+
+        # Input: Checkbox if file has header ----
+        checkboxInput("header", "Header", TRUE),
+
+        # Input: Select separator ----
+        radioButtons("sep", "Separator",
+                     choices = c(Comma = ",",
+                                 Semicolon = ";",
+                                 Tab = "\t"),
+                     selected = ","),
+
+        # Input: Select quotes ----
+        radioButtons("quote", "Quote",
+                     choices = c(None = "",
+                                 "Double Quote" = '"',
+                                 "Single Quote" = "'"),
+                     selected = '"'),
+
+        # Horizontal line ----
+        tags$hr(),
+
+
+
+        textInput(inputId = "catvector",
+                  label = "Categorical column indices (default:mtcars.csv)",
+                  value = "2,8,9,10,11"),
+
+        textInput(inputId = "targetname",
+                  label = "Dependent Variable",
+                  value = "mpg")
+
+
+      ),
+
+
+
+      # Main panel for displaying outputs ----
+      mainPanel(
+
+        # Output: Data file ----
+        tableOutput("contents"),
+
+        tabsetPanel(type = "tabs",
+                    tabPanel("Univariate Plots",fluidPage(uiOutput('markdown_greet'))),
+                    tabPanel("Summary Table",fluidPage(uiOutput('markdown_flex'))),
+                    tabPanel("Transformations", fluidPage(uiOutput('markdown_trans'))),
+                    tabPanel("Feature Hints", fluidPage(uiOutput('markdown_feature'))),
+                    tabPanel("Bivariate Plots", fluidPage(uiOutput('markdown_res'))),
+                    tabPanel("Statistical Tests", fluidPage(uiOutput('markdown_tests')))
+        )
+      )
+
+    )
+  )
+
+  # Define server logic to read selected file ----
+  server <- function(input, output) {
+
+
+    df_upload <- reactive({
+      req(input$file1)
+      path <- input$file1$datapth
+      df <- read.csv(input$file1$datapath,
+                     header = input$header,
+                     sep = input$sep,
+                     quote = input$quote)
+      return(df)})
+
+    catvector_upload <- reactive({
+      req(input$file1)
+      req(input$catvector)
+      df <- df_upload()
+      in_cv <- input$catvector
+      in_cv <- gsub(",", " ", in_cv)
+      in_cv <- as.numeric(unlist(strsplit(in_cv," ", fixed=T)))
+      my_cv <- rep(0,ncol(df))
+      my_cv[in_cv] <- 1
+      final_cv <- my_cv
+      return(final_cv)
+    })
+
+    depvar_upload <- reactive({
+      req(input$file1)
+      req(input$targetname)
+      depvar <- input$targetname
+      return(depvar)
+    })
+
+
+    output$contents <- renderTable({
+      req(input$file1)
+      df <- df_upload()
+      return(head(df,5))
+    })
+
+    output$catcols <- renderText({
+      req(input$file1)
+      req(input$catvector)
+      cv <- catvector_upload()
+      df <- df_upload()
+      cat_names <- names(df)[which(cv==1)]
+      cat_out <- append("categorical features: ",cat_names)
+      print(cat_out)})
+
+    output$depvar <- renderText({
+      req(input$file1)
+      depvar <- depvar_upload()
+      df <- df_upload()
+      dv_idx <- which(names(df) == depvar)
+      return(head(df[,dv_idx],5))
+    })
+
+    output$markdown_greet <- renderUI({
+      req(input$file1)
+      df <- df_upload()
+      cv <- catvector_upload()
+      depvar <- depvar_upload()
+      withMathJax(HTML(readLines(rmarkdown::render(input = "R/greetings_helper.Rmd",
+                                                   output_format = rmarkdown::html_fragment(),
+                                                   quiet = TRUE
+      ))))
+    })
+
+    output$markdown_flex <- renderUI({
+      req(input$file1)
+      df <- df_upload()
+      cv <- catvector_upload()
+      depvar <- depvar_upload()
+      withMathJax(HTML(readLines(rmarkdown::render(input = "R/flexin_helper.Rmd",
+                                                   output_format = rmarkdown::html_fragment(),
+                                                   quiet = TRUE
+      ))))
+    })
+
+    output$markdown_trans <- renderUI({
+      req(input$file1)
+      df <- df_upload()
+      cv <- catvector_upload()
+      depvar <- depvar_upload()
+      withMathJax(HTML(readLines(rmarkdown::render(input = "R/transformer_helper.Rmd",
+                                                   output_format = rmarkdown::html_fragment(),
+                                                   quiet = TRUE
+      ))))
+    })
+
+    output$markdown_feature <- renderUI({
+      req(input$file1)
+      df <- df_upload()
+      cv <- catvector_upload()
+      depvar <- depvar_upload()
+      withMathJax(HTML(readLines(rmarkdown::render(input = "R/feature_helper.Rmd",
+                                                   output_format = rmarkdown::html_fragment(),
+                                                   quiet = TRUE
+      ))))
+    })
+
+    output$markdown_res <- renderUI({
+      req(input$file1)
+      df <- df_upload()
+      cv <- catvector_upload()
+      depvar <- depvar_upload()
+      withMathJax(HTML(readLines(rmarkdown::render(input = "R/relationships_helper.Rmd",
+                                                   output_format = rmarkdown::html_fragment(),
+                                                   quiet = TRUE
+      ))))
+    })
+
+    output$markdown_tests <- renderUI({
+      req(input$file1)
+      df <- df_upload()
+      cv <- catvector_upload()
+      depvar <- depvar_upload()
+      withMathJax(HTML(readLines(rmarkdown::render(input = "R/tests_helper.Rmd",
+                                                   output_format = rmarkdown::html_fragment(),
+                                                   quiet = TRUE
+      ))))
+    })
+
+
+  }
+
+  # Create Shiny app ----
+  return(shinyApp(ui, server))
+
+}

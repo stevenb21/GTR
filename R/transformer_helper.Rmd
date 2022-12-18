@@ -1,0 +1,32 @@
+---
+title: "Transformation"
+author: "Steven Brooks"
+date: "2022-12-17"
+output: html_document
+---
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,fig.width=15,fig.height=15)
+```
+
+
+Here is the transformation report - 6 graphs for each continuous feature (legend below).
+This quick report can help spot any features in need of further preprocessing.
+
+
+```{r, echo=FALSE}
+transformall(df,cv)
+```
+
+
+The first column is the data as is, unchanged.
+
+Second column is a qqplot.
+
+Third column is the log transformation of the feature.
+
+Fourth column is the root transformation of the feature.
+
+Fifth column is the feature with mean imputation.
+
+Sixth column is a standardization of the feature.
