@@ -1,0 +1,209 @@
+---
+title: "GTR Vignette"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{my-vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 10,
+  fig.height = 10
+)
+```
+
+```{r, include = FALSE}
+library(GTR)
+```
+
+### Introduction to GTR
+
+  When solving a problem, and given new data, one must:
+
+      + Discover what the data looks like.
+      + Conceive what the data could look like, with processing.
+      + Relate the data with the problem at hand.
+      
+The GTR R package takes care of each problem, one at a time:
+
+      + Greetings Suite : Returns a plot for each feature and a summary table
+      + Transform Suite : Returns a transformations of each continuous feature and feature selection graphs.
+      + Relations Suite : Returns bivariate plots and statistical tests, given a dependent variable.
+      
+
+The only input required is a tabular data set, a vector describing which columns are categorical, and the column name of the dependent variable.
+
+### Brief Literature Review of other EDA packages
+
+There are many formidable packages for exploratory data analysis on CRAN, such as:
+
+    +dlookr: provides three different reports, an inspiration for the 'three     suites' of this project (esp. transformation report.). Lacks any            dependent variable modeling orstatistical testing.
+    +DataExplorer: very good for univariate and bivariate plotting, (even         includes qqplots and PCA plots on the fly) but lacks statistical          testing.
+    +explore and RtutoR: both notable for full shiny capability. 
+    +and funModeling, autoEDA, Smart EDA, summarytools... there's a great         github page linking to all of these:
+     https://github.com/mstaniak/autoEDA-resources
+
+What sets this package, GTR, apart: a plug and play philosophy. Just delcare a dataframe, list the categorical columns, and a dependent variable: GTR will plot, summarize, transform, rank features, and relate it all to the dependent variable. None of the packages on cran have all of the features of this package in one place, with a shiny-markdown interface. 
+
+Just call
+
+gtr_shiny()
+
+to check it out!
+
+Without further ado, here are some examples:
+
+### mtcars : mpg example 1
+
+Setup
+
+```{r}
+df <- mtcars
+cv <- c(0,1,0,0,0,0,0,1,1,1,1)
+depvar <- "mpg"
+```
+
+
+### Greetings Suite - Get to know your data
+
+
+oneplot() gives univariate plots for each feature in the data set. 
+
+Continuous features get histograms, and categorical features get bar graphs.
+
+```{r}
+oneplot(df,cv)
+```
+
+flexin() provides a summary table:
+
+```{r}
+flexin(df,cv)
+```
+
+
+### Transform Suite 
+
+transformall() quickly gives inspiration for feature preprocessing and engineering.
+
+It returns 6 graphs for each continuous feature.
+
+The first column is the data as is, unchanged.
+
+Second column is a qqplot.
+
+Third column is the log transformation of the feature.
+
+Fourth column is the root transformation of the feature.
+
+Fifth column is the feature with mean imputation.
+
+Sixth column is a standardization of the feature.
+
+```{r}
+transformall(df,cv)
+```
+
+
+miscplots() will ideally give clues for feature selection.
+
+The trusty Scree plot will tell you how many features PCA thinks is important (if you can find a good elbow).
+
+The feature importance plot shows how important each feature is to a default random forest fitted for the dependent variable.
+
+And for the Bayesianists and machine learning folks we have an entropy plot for each feature. Theoretically it’s a measure of uncertainty for each feature.
+
+
+
+```{r}
+miscplots(df,depvar,cv)
+```
+
+
+### Relationship Suite
+
+twoplot() - each feature plotted against the dependent variable - along with a correlation matrix at the end.
+
+For continuous features and continuous dependent variables, a scatterplot is returned.
+
+For a mix of categorical and continuous data, a barplot is returned.
+
+For categorical features and categorical dependent variables, a barplot with fill is returned.
+
+```{r}
+twoplot(df,depvar,cv)
+```
+
+compute() - returns p-value of an appropriate statistical test for each type of feature/variable pair.
+
+For a continuous feature and continuous dependent variable, it uses linear regression.
+For a categorical feature and continuous dependent variable, it uses ANOVA.
+For a categorical feature and continuous dependent variable, it uses either logistic or multinomial regression.
+For a categorical feature and categorical dependent variable, it uses  a Chisquared test.
+
+
+```{r}
+compute(df,depvar,cv)
+```
+
+
+### iris : Species example 2
+
+Setup
+
+```{r}
+df <- iris
+cv <- c(0,0,0,0,1)
+depvar <- "Species"
+```
+
+Greetings
+
+```{r}
+oneplot(df,cv)
+```
+
+
+```{r}
+flexin(df,cv)
+```
+
+
+Transform 
+
+```{r}
+transformall(df,cv)
+```
+
+```{r}
+miscplots(df,depvar,cv)
+```
+
+
+Relations
+
+```{r}
+twoplot(df,depvar,cv)
+```
+
+```{r}
+compute(df,depvar,cv)
+```
+
+
+
+
+
+### Future Work 
+
+
+
+Robustness to character features without impeding the user - implementing either dummification or one-hot-encoding on the fly. While dummify() from statspat works, it blows up the number of columns. One hot encoding is a solution but may make the data ambiguous, especially with how hidden the encoding could be from the user in the context of 'plug-and-play'.
+
+There's quite a bit of a friction in the package from declaring the categorical columns. A better way to determine categorical columns both within and outside the shiny app is sorely needed. Either automatically detect categoricals with a threshold (sensitive to very low/very high number of observations), or with an input accepting any names/binary vectors/column indices. Perhaps check marks on each feature column in the shiny app could work well too.
+
+On the shiny app side multiple features are desired: a print pdf option, robust auto-generated text summaries (max value of feature x is n, dependent variable is most correlated with ...). A print pdf feature wouldn't be too difficult with the markdown rendering setting from 'html' to 'pdf' and an appropriate ui button. The text would also not be too difficult, same idea of just getting inline coding in with the R markdown files and putting them in the appropriate place in the ui.
