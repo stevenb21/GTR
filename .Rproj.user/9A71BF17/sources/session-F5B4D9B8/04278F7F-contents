@@ -1,0 +1,12 @@
+Package: GTR
+Type: Package
+Title: Automated Exploratory Data Analysis
+Version: 1.0.0
+Author: Steven Brooks <stevbroo@iu.edu>
+Maintainer: Steven Brooks <stevbroo@iu.edu>
+Description: Plots, summarizes, transforms, fits, and tests data.
+Requires a tabular dataset, a vector indicating categorical features, and a
+dependent variable.
+License: MIT
+Encoding: UTF-8
+LazyData: true

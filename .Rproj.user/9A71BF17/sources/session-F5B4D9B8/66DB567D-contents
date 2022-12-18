@@ -1,0 +1,237 @@
+---
+title: "shinygadget"
+author: "Steven Brooks"
+date: "2022-12-16"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, echo=FALSE}
+library(shiny)
+library(knitr)
+library(tidyverse)
+library(flextable)
+library(moments) #skewness
+library(patchwork) #ggplot
+library(reshape2) # cormat 
+library(randomForest)
+library(entropy)
+library(nnet) #multilog reg
+
+options(scipen = 999) #disable scientific notation
+
+source('greetings.r')
+source('transform.r')
+source('relationships.r')
+
+```
+
+
+```{r}
+
+
+# Define UI for data upload app ----
+ui <- fluidPage(
+
+  # App title ----
+  titlePanel("DataReporteR"),
+
+  # Sidebar layout with input and output definitions ----
+  sidebarLayout(
+
+    # Sidebar panel for inputs ----
+    sidebarPanel(
+
+      # Input: Select a file ----
+      fileInput("file1", "Choose CSV File",
+                multiple = TRUE,
+                accept = c("text/csv",
+                         "text/comma-separated-values,text/plain",
+                         ".csv")),
+
+      # Horizontal line ----
+      tags$hr(),
+
+      # Input: Checkbox if file has header ----
+      checkboxInput("header", "Header", TRUE),
+
+      # Input: Select separator ----
+      radioButtons("sep", "Separator",
+                   choices = c(Comma = ",",
+                               Semicolon = ";",
+                               Tab = "\t"),
+                   selected = ","),
+
+      # Input: Select quotes ----
+      radioButtons("quote", "Quote",
+                   choices = c(None = "",
+                               "Double Quote" = '"',
+                               "Single Quote" = "'"),
+                   selected = '"'),
+
+      # Horizontal line ----
+      tags$hr(),
+
+      # Input: Select number of rows to display ----
+      radioButtons("disp", "Display",
+                   choices = c(Head = "head",
+                               All = "all"),
+                   selected = "head")
+
+    ),
+
+    # Main panel for displaying outputs ----
+    mainPanel(
+
+      # Output: Data file ----
+      tableOutput("contents")
+
+    )
+
+  )
+)
+
+# Define server logic to read selected file ----
+server <- function(input, output) {
+
+  output$contents <- renderTable({
+
+    # input$file1 will be NULL initially. After the user selects
+    # and uploads a file, head of that data file by default,
+    # or all rows if selected, will be shown.
+
+    req(input$file1)
+
+    df <- as.data.frame(read.csv(input$file1$datapath,
+             header = input$header,
+             sep = input$sep,
+             quote = input$quote))
+
+    if(input$disp == "head") {
+      return(flexin(df))
+    }
+    else {
+      return(df)
+    }
+
+  })
+
+}
+
+# Create Shiny app ----
+shinyApp(ui, server)
+
+```
+
+
+```{r}
+my_shiny_gadget <- function(data, x_axis_variable = NULL, y_axis_variable = NULL){
+  
+
+  
+  ui <- fluidPage(# App title ----
+                  titlePanel("Uploading Files"),
+                  
+                  # Sidebar layout with input and output definitions ----
+                  sidebarLayout(
+                    # Sidebar panel for inputs ----
+                    sidebarPanel(
+                      # Input: Select a file ----
+                      fileInput(
+                        "file1",
+                        "Choose CSV File",
+                        multiple = TRUE,
+                        accept = c("text/csv",
+                                   "text/comma-separated-values,text/plain",
+                                   ".csv")
+                      ),
+                      
+                      # Horizontal line ----
+                      tags$hr(),
+                      
+                      # Input: Checkbox if file has header ----
+                      checkboxInput("header", "Header", TRUE),
+                      
+                      # Input: Select separator ----
+                      radioButtons(
+                        "sep",
+                        "Separator",
+                        choices = c(
+                          Comma = ",",
+                          Semicolon = ";",
+                          Tab = "\t"
+                        ),
+                        selected = ","
+                      ),
+                      
+                      # Input: Select quotes ----
+                      radioButtons(
+                        "quote",
+                        "Quote",
+                        choices = c(
+                          None = "",
+                          "Double Quote" = '"',
+                          "Single Quote" = "'"
+                        ),
+                        selected = '"'
+                      ),
+                      
+                      # Horizontal line ----
+                      tags$hr(),
+                      
+                      # Input: Select number of rows to display ----
+                      radioButtons(
+                        "disp",
+                        "Display",
+                        choices = c(Head = "head",
+                                    All = "all"),
+                        selected = "head"
+                      )
+                      
+                    ),
+                    
+                    # Main panel for displaying outputs ----
+                    mainPanel(# Output: Data file ----
+                              tableOutput("contents"))
+                    
+                  ))
+  
+  server <- function(input, output, session){
+    
+    results <- reactiveValues(
+      colourcodes = rep("none", nrow(data)))
+        
+    # when there is a brush event, update the colourcodes accordingly
+    # also clears the brush, otherwise it just lingers there
+    observeEvent(input$main_plot_brush,{
+      results$colourcodes[
+        brushedPoints(data, input$main_plot_brush, allRows = TRUE)$selected_] <- 
+      input$colour
+    })
+    
+    # the plot updates every time the variables or the colourcode changes
+    main_plot <- reactive(
+      draw_main_plot(
+        data, input$x_axis_variable, input$y_axis_variable, results$colourcodes))
+    output$main_plot <- renderPlot(main_plot())
+    
+    observeEvent(main_plot(), {
+      session$resetBrush("main_plot_brush")  
+    })
+    
+    # handle cancel and done
+    observeEvent(input$cancel, {
+      stopApp(NULL)
+    })
+    observeEvent(input$done, {
+      stopApp(results$colourcodes)
+    })
+  }
+  runGadget(ui, server)
+}
+```
+
+
