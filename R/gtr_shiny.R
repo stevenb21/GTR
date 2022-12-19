@@ -147,7 +147,7 @@ gtr_shiny <- function(){
       df <- df_upload()
       cv <- catvector_upload()
       depvar <- depvar_upload()
-      withMathJax(HTML(readLines(rmarkdown::render(input = "greetings_helper.Rmd",
+      withMathJax(HTML(readLines(rmarkdown::render(input = system.file("greetings_helper.Rmd",package="GTR"),
                                                    output_format = rmarkdown::html_fragment(),
                                                    quiet = TRUE
       ))))
@@ -158,7 +158,7 @@ gtr_shiny <- function(){
       df <- df_upload()
       cv <- catvector_upload()
       depvar <- depvar_upload()
-      withMathJax(HTML(readLines(rmarkdown::render(input = "flexin_helper.Rmd",
+      withMathJax(HTML(readLines(rmarkdown::render(input = system.file("flexin_helper.Rmd",package="GTR"),
                                                    output_format = rmarkdown::html_fragment(),
                                                    quiet = TRUE
       ))))
@@ -169,7 +169,7 @@ gtr_shiny <- function(){
       df <- df_upload()
       cv <- catvector_upload()
       depvar <- depvar_upload()
-      withMathJax(HTML(readLines(rmarkdown::render(input = "transformer_helper.Rmd",
+      withMathJax(HTML(readLines(rmarkdown::render(input = system.file("transformer_helper.Rmd",package="GTR"),
                                                    output_format = rmarkdown::html_fragment(),
                                                    quiet = TRUE
       ))))
@@ -180,7 +180,7 @@ gtr_shiny <- function(){
       df <- df_upload()
       cv <- catvector_upload()
       depvar <- depvar_upload()
-      withMathJax(HTML(readLines(rmarkdown::render(input = "feature_helper.Rmd",
+      withMathJax(HTML(readLines(rmarkdown::render(input = system.file("feature_helper.Rmd",package="GTR"),
                                                    output_format = rmarkdown::html_fragment(),
                                                    quiet = TRUE
       ))))
@@ -191,7 +191,7 @@ gtr_shiny <- function(){
       df <- df_upload()
       cv <- catvector_upload()
       depvar <- depvar_upload()
-      withMathJax(HTML(readLines(rmarkdown::render(input = "relationships_helper.Rmd",
+      withMathJax(HTML(readLines(rmarkdown::render(input = system.file("relationships_helper.Rmd",package="GTR"),
                                                    output_format = rmarkdown::html_fragment(),
                                                    quiet = TRUE
       ))))
@@ -202,7 +202,7 @@ gtr_shiny <- function(){
       df <- df_upload()
       cv <- catvector_upload()
       depvar <- depvar_upload()
-      withMathJax(HTML(readLines(rmarkdown::render(input = "tests_helper.Rmd",
+      withMathJax(HTML(readLines(rmarkdown::render(input = system.file("tests_helper.Rmd",package="GTR"),
                                                    output_format = rmarkdown::html_fragment(),
                                                    quiet = TRUE
       ))))
