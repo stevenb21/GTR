@@ -1,4 +1,3 @@
-````markdown
 # GTR: Automated Exploratory Data Analysis in R
 
 ## Overview
